@@ -54,38 +54,3 @@ appDirectives.directive("footerLayout", function () {
         console.log("directive linking.");
     }
 });
-
-// appDirectives.directive('ngDebounce', function ($timeout) {
-//   return {
-//       restrict: 'A',
-//       require: 'ngModel',
-//       priority: 99,
-//       link: function (scope, elm, attr, ngModelCtrl) {
-//           if (attr.type === 'password' || attr.type === 'submit') {
-//               return;
-//           }
-
-//           var delay = parseInt(attr.ngDebounce, 3);
-//           if (isNaN(delay)) {
-//               delay = 30000;
-//           }
-
-//           elm.unbind('input');
-
-//           var debounce;
-//           elm.bind('input', function () {
-//               $timeout.cancel(debounce);
-//               debounce = $timeout(function () {
-//                   scope.$apply(function () {
-//                       ngModelCtrl.$setViewValue(elm.val());
-//                   });
-//               }, delay);
-//           });
-//           elm.bind('blur', function () {
-//               scope.$apply(function () {
-//                   ngModelCtrl.$setViewValue(elm.val());
-//               });
-//           });
-//       }
-//   };
-// });

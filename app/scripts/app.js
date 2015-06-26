@@ -30,8 +30,7 @@ app.config(['$locationProvider', '$routeProvider', '$httpProvider',
           }).
           when('/password/reset/:token', {
               templateUrl: 'views/change-password.html',
-              controller: 'LoginController',
-              access: { requiredAuthentication: true }
+              controller: 'LoginController'
           }).
             otherwise({
               redirectTo: '/login'

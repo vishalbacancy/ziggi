@@ -1,18 +1,17 @@
 'use strict';
 
-appControllers.controller('LoginController', ['$scope', '$http', '$rootScope','$location', '$window', '$cookies', '$cookieStore', 'UserService', 'AuthenticationService',
-    function LoginController($scope, $http, $rootScope, $location, $window, $cookies, $cookieStore, UserService, AuthenticationService) {
+appControllers.controller('LoginController', ['$scope', '$http', '$rootScope','$location', '$window', '$cookieStore', 'UserService', 'AuthenticationService',
+    function LoginController($scope, $http, $rootScope, $location, $window, $cookieStore, UserService, AuthenticationService) {
         //Admin User Controller (signIn, logOut)
         //$scope.remember = false;
-        var count = 0;
-        if($.cookie('count') == "3") {
-          console.log("hello")
+        if($cookieStore.get('count') >= 3) {
+
           $('#emailID').attr('disabled', 'disabled');
-              $('#inputPassword').attr('disabled', 'disabled');
-              $scope.email = '';
-              $scope.password = '';
-              setTimeout(function() { $('#emailID').removeAttr('disabled'); }, 30000);
-              setTimeout(function() { $('#inputPassword').removeAttr('disabled'); }, 30000);
+          $('#inputPassword').attr('disabled', 'disabled');
+          setTimeout(function() { $('#emailID').removeAttr('disabled'); }, 30000);
+          setTimeout(function() { $('#inputPassword').removeAttr('disabled'); }, 30000);
+          setTimeout(function() { $('#blockAccess').attr('display', 'hide');  }, 30000);  
+          setTimeout(function() { $cookieStore.put('count',0);}, 30000);  
         }
         $scope.email = '';
         $scope.emailId = '';
@@ -21,12 +20,16 @@ appControllers.controller('LoginController', ['$scope', '$http', '$rootScope','$
         $scope.newPassword = '';
         $scope.confirmNewPassword ='';
         $scope.blockLogin = false;
+        var count = 0;
+        var now = new Date();
+        var exp = new Date(now.getFullYear()+1, now.getMonth(), now.getDate());
+        console.log(exp);
         if($rootScope.authtoken){
           $location.path("/home"); 
         }
 
         $scope.login = function (email, password) {
-            if($.cookie('count') >= 2) {
+            if($cookieStore.get('count') >= 2) {
               console.log("hello")
               $scope.blockLogin = true;
               $('#emailID').attr('disabled', 'disabled');
@@ -35,8 +38,10 @@ appControllers.controller('LoginController', ['$scope', '$http', '$rootScope','$
               $scope.password = '';
               setTimeout(function() { $('#emailID').removeAttr('disabled'); }, 30000);
               setTimeout(function() { $('#inputPassword').removeAttr('disabled'); }, 30000);
+              setTimeout(function() { $('#blockAccess').attr('display', 'hide');  }, 30000);  
+              setTimeout(function() { $cookieStore.put('count',0);}, 30000);  
             }
-
+            //$scope.blockLogin = false;
             UserService.signIn(email,password).success(function(data) {
               if(data[0].status == "success"){
                   AuthenticationService.isAuthenticated = true;
@@ -46,14 +51,17 @@ appControllers.controller('LoginController', ['$scope', '$http', '$rootScope','$
                   $rootScope.$broadcast('user-logged');
                   $location.path("/home"); 
               }
-              else if(data[0].status == "fail" && email !== null || password !== null) {
-                  var a = new Date();
-                  a.setSeconds(a.getSeconds() + 30);
+              else if(email == null || password == null){
+                $('#message').fadeIn('slow');
+                  $scope.message = "Email and Password should not be empty";
+                  setTimeout(function() {$scope.clearmessage();}, 1000);
+              }
+              else if(data[0].status == "fail" && email !== null && password !== null) {
                   $('#message').fadeIn('slow');
                   $scope.message = data[0].msg;
                   setTimeout(function() {$scope.clearmessage();}, 1000);
                   count ++;
-                  $.cookie('count', count, { expires: a });              
+                  $cookieStore.put('count',count);                
               }
               else{
                   $location.path("/login");
@@ -76,19 +84,22 @@ appControllers.controller('LoginController', ['$scope', '$http', '$rootScope','$
           $scope.isForgotPassword = true;
         }
 
-        $scope.sendEmail = function(email){  
+        $scope.sendEmail = function(email){
+          $cookieStore.put('count',count);   
           UserService.forgotPassword(email).success(function(data) {
-                    console.log(data);
-                    if(data.status == "fail"){
+                  console.log(data);
+                  if(data.status == "fail"){
                     $scope.message = data.msg;  
                     setTimeout(function() {$scope.clearmessage();}, 1000);
-                  }
+                }
                 }).error(function(status, data) {
                     console.log(status);
                     console.log(data);
                 });
             }
-        $scope.changePassword = function(email, password, confirmPassword) { 
+        //console.log($window.location.href);
+        $scope.changePassword = function(email, password, confirmPassword) {
+            $cookieStore.put('count',count);   
             UserService.changePassword(email, $rootScope.reset_token[1], password, confirmPassword).success(function(data) {
           
                   if(data.status == "success") {
@@ -110,6 +121,8 @@ appControllers.controller('LoginController', ['$scope', '$http', '$rootScope','$
 
 
         $scope.logOut = function () {
+          $cookieStore.put('count',count);   
+          console.log(AuthenticationService.isAuthenticated)
             if (AuthenticationService.isAuthenticated) {
                 UserService.logOut($rootScope.authtoken).success(function(data) {
                     AuthenticationService.isAuthenticated = false;
@@ -127,5 +140,5 @@ appControllers.controller('LoginController', ['$scope', '$http', '$rootScope','$
             }
         }
 
-    console.log(AuthenticationService.isAuthenticated)
-}]);
+console.log(AuthenticationService.isAuthenticated)
+    }]);
